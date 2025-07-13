@@ -2,10 +2,5 @@
   "buildCommand": "flutter build web",
   "outputDirectory": "build/web",
   "framework": null,
-  "installCommand": "flutter pub get",
-  "functions": {
-    "build/web/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  "installCommand": "flutter pub get"
 } 
