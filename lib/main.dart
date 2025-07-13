@@ -117,6 +117,117 @@ class NotificationService {
     );
   }
 
+  static Future<void> scheduleWindDownReminder(TimeOfDay targetBedtime) async {
+    if (!_initialized) await initialize();
+    
+    // Calculate reminder time (1 hour before bedtime)
+    final now = DateTime.now();
+    final bedtimeDateTime = DateTime(now.year, now.month, now.day, targetBedtime.hour, targetBedtime.minute);
+    final reminderTime = bedtimeDateTime.subtract(const Duration(hours: 1));
+    
+    // If the reminder time has passed today, schedule for tomorrow
+    final scheduledTime = reminderTime.isBefore(now) 
+        ? reminderTime.add(const Duration(days: 1))
+        : reminderTime;
+
+    await _notifications.zonedSchedule(
+      4, // Wind down reminder ID
+      'Sleep Fixer AI',
+      'Time to start your wind down routine! 🌙 Get off screens and dim the lights.',
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'sleep_wind_down',
+          'Wind Down Reminder',
+          channelDescription: 'Daily wind down reminder',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  static Future<void> scheduleScreenOffReminder(TimeOfDay targetBedtime) async {
+    if (!_initialized) await initialize();
+    
+    // Calculate reminder time (30 minutes before bedtime)
+    final now = DateTime.now();
+    final bedtimeDateTime = DateTime(now.year, now.month, now.day, targetBedtime.hour, targetBedtime.minute);
+    final reminderTime = bedtimeDateTime.subtract(const Duration(minutes: 30));
+    
+    // If the reminder time has passed today, schedule for tomorrow
+    final scheduledTime = reminderTime.isBefore(now) 
+        ? reminderTime.add(const Duration(days: 1))
+        : reminderTime;
+
+    await _notifications.zonedSchedule(
+      5, // Screen off reminder ID
+      'Sleep Fixer AI',
+      'Time to put away your devices! 📱 Avoid screens for better sleep.',
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'sleep_screen_off',
+          'Screen Off Reminder',
+          channelDescription: 'Daily screen off reminder',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  static Future<void> scheduleDimLightsReminder(TimeOfDay targetBedtime) async {
+    if (!_initialized) await initialize();
+    
+    // Calculate reminder time (45 minutes before bedtime)
+    final now = DateTime.now();
+    final bedtimeDateTime = DateTime(now.year, now.month, now.day, targetBedtime.hour, targetBedtime.minute);
+    final reminderTime = bedtimeDateTime.subtract(const Duration(minutes: 45));
+    
+    // If the reminder time has passed today, schedule for tomorrow
+    final scheduledTime = reminderTime.isBefore(now) 
+        ? reminderTime.add(const Duration(days: 1))
+        : reminderTime;
+
+    await _notifications.zonedSchedule(
+      6, // Dim lights reminder ID
+      'Sleep Fixer AI',
+      'Time to dim the lights! 💡 Create a relaxing environment for sleep.',
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'sleep_dim_lights',
+          'Dim Lights Reminder',
+          channelDescription: 'Daily dim lights reminder',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
   static Future<void> scheduleWeeklyReport() async {
     if (!_initialized) await initialize();
     
@@ -285,6 +396,7 @@ class MyRootApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Sleep Fixer',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
@@ -301,6 +413,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Sleep Fixer',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
@@ -330,23 +443,29 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.indigo,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/sleep_fixer_background.png', width: 120, height: 120),
-            const SizedBox(height: 24),
-            const Text(
-              'Sleep Fixer',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/sleep_fixer_background.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Sleep Fixer',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -391,48 +510,52 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.indigo[900],
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView.builder(
-                controller: _controller,
-                itemCount: _pages.length,
-                onPageChanged: (i) => setState(() => _pageIndex = i),
-                itemBuilder: (context, i) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (i == 0)
-                          Image.asset('assets/sleep_fixer_background.png', width: 100, height: 100),
-                        const SizedBox(height: 32),
-                        Text(
-                          _pages[i]['title']!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/sleep_fixer_background.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: PageView.builder(
+                  controller: _controller,
+                  itemCount: _pages.length,
+                  onPageChanged: (i) => setState(() => _pageIndex = i),
+                  itemBuilder: (context, i) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _pages[i]['title']!,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          _pages[i]['desc']!,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 18,
+                          const SizedBox(height: 24),
+                          Text(
+                            _pages[i]['desc']!,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 18,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(_pages.length, (i) => Container(
@@ -475,6 +598,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -493,10 +617,56 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   TimeOfDay? currentSleepTime; // Store plan data
   TimeOfDay? goalSleepTime;
   bool? use30MinuteShifts;
+  int? planLength;
+
+  // Method to reset the plan
+  void _resetPlan() {
+    setState(() {
+      planCreated = false;
+      currentSleepTime = null;
+      goalSleepTime = null;
+      use30MinuteShifts = null;
+    });
+    
+    // Cancel all notifications when plan is reset
+    ProgressTrackingService.cancelAllNotifications();
+    
+    // Clear all progress data
+    _clearAllProgressData();
+    
+    // Show confirmation message
+    showSnackBarWithClose(context, message: 'Plan reset! Start fresh with a new sleep schedule.');
+  }
+
+  // Method to update the plan
+  void _updatePlan(TimeOfDay newCurrentSleepTime, TimeOfDay newGoalSleepTime, bool newUse30MinuteShifts) {
+    setState(() {
+      currentSleepTime = newCurrentSleepTime;
+      goalSleepTime = newGoalSleepTime;
+      use30MinuteShifts = newUse30MinuteShifts;
+      planLength = _calculatePlanLength(newCurrentSleepTime, newGoalSleepTime);
+    });
+    
+    // Cancel existing notifications and schedule new ones
+    ProgressTrackingService.cancelAllNotifications();
+    
+    // Show confirmation message
+    showSnackBarWithClose(context, message: 'Plan updated successfully! ✨');
+  }
+
+  // Helper method to clear all progress data
+  void _clearAllProgressData() async {
+    try {
+      final box = await Hive.openBox('sleep_progress');
+      await box.clear();
+    } catch (e) {
+      // Handle error silently
+    }
+  }
 
   final List<Widget> _screens = [
     const FullPlanScreen(),
-    const ProfileScreen(),
+    ProfileScreen(onResetPlan: null), // Will be updated in _getScreen
   ];
 
   Widget _getScreen(int index) {
@@ -513,7 +683,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           goalSleepTime: goalSleepTime ?? const TimeOfDay(hour: 22, minute: 0),
         );
       case 2:
-        return const ProfileScreen();
+        return ProfileScreen(
+          onResetPlan: _resetPlan,
+          currentSleepTime: currentSleepTime,
+          goalSleepTime: goalSleepTime,
+          use30MinuteShifts: use30MinuteShifts,
+          onPlanUpdated: _updatePlan,
+        );
       default:
         return const FullPlanScreen();
     }
@@ -523,6 +699,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/sleep_fixer_background.png'),
@@ -538,6 +715,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       currentSleepTime: currentSleepTime!,
                       goalSleepTime: goalSleepTime!,
                       use30MinuteShifts: use30MinuteShifts!,
+                      onResetPlan: _resetPlan,
+                      planLength: planLength,
                     ) : SleepShiftScreen(
                       onPlanCreated: (current, goal, use30Min) {
                         setState(() {
@@ -545,6 +724,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           currentSleepTime = current;
                           goalSleepTime = goal;
                           use30MinuteShifts = use30Min;
+                          planLength = _calculatePlanLength(current, goal);
                         });
                       },
                     ))
@@ -590,6 +770,70 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
       ),
     );
+  }
+
+  int _calculatePlanLength(TimeOfDay current, TimeOfDay goal) {
+    int currentMinutes = current.hour * 60 + current.minute;
+    int goalMinutes = goal.hour * 60 + goal.minute;
+    int difference = goalMinutes - currentMinutes;
+    if (difference.abs() > 12 * 60) {
+      if (difference > 0) {
+        difference -= 24 * 60;
+      } else {
+        difference += 24 * 60;
+      }
+    }
+    bool goingBackwards = difference < 0;
+    difference = difference.abs();
+    int shiftSize;
+    if (difference <= 60) {
+      shiftSize = 15;
+    } else if (difference <= 180) {
+      shiftSize = 20;
+    } else {
+      shiftSize = 30;
+    }
+    int daysPerShift = difference <= 120 ? 1 : 2;
+    int planLength = 0;
+    int currentTargetMinutes = currentMinutes;
+    bool reachedGoal = false;
+    while (!reachedGoal) {
+      int nextTargetMinutes;
+      if (goingBackwards) {
+        nextTargetMinutes = currentTargetMinutes - shiftSize;
+        if (nextTargetMinutes < 0) {
+          nextTargetMinutes += 24 * 60;
+        }
+      } else {
+        nextTargetMinutes = currentTargetMinutes + shiftSize;
+        if (nextTargetMinutes >= 24 * 60) {
+          nextTargetMinutes -= 24 * 60;
+        }
+      }
+      int minutesToGoal;
+      if (goingBackwards) {
+        minutesToGoal = nextTargetMinutes - goalMinutes;
+        if (minutesToGoal < 0) {
+          minutesToGoal += 24 * 60;
+        }
+        if (minutesToGoal <= shiftSize) {
+          nextTargetMinutes = goalMinutes;
+          reachedGoal = true;
+        }
+      } else {
+        minutesToGoal = goalMinutes - nextTargetMinutes;
+        if (minutesToGoal < 0) {
+          minutesToGoal += 24 * 60;
+        }
+        if (minutesToGoal <= shiftSize) {
+          nextTargetMinutes = goalMinutes;
+          reachedGoal = true;
+        }
+      }
+      planLength++;
+      currentTargetMinutes = nextTargetMinutes;
+    }
+    return planLength;
   }
 }
 
@@ -641,10 +885,21 @@ class _FullPlanScreenState extends State<FullPlanScreen> {
     int currentMinutes = widget.currentSleepTime!.hour * 60 + widget.currentSleepTime!.minute;
     int goalMinutes = widget.goalSleepTime!.hour * 60 + widget.goalSleepTime!.minute;
     
-    int difference = currentMinutes - goalMinutes;
-    if (difference < 0) {
-      difference += 24 * 60; // Add 24 hours if goal is earlier
+    // Calculate the shortest path to the goal
+    int difference = goalMinutes - currentMinutes;
+    if (difference.abs() > 12 * 60) {
+      // If the difference is more than 12 hours, take the shorter path
+      if (difference > 0) {
+        difference -= 24 * 60; // Go backwards instead of forwards
+      } else {
+        difference += 24 * 60; // Go forwards instead of backwards
+      }
     }
+    
+    // If difference is negative, we need to go backwards (earlier bedtime)
+    // If difference is positive, we need to go forwards (later bedtime)
+    bool goingBackwards = difference < 0;
+    difference = difference.abs();
     
     // Smart shift size calculation
     int shiftSize;
@@ -666,17 +921,46 @@ class _FullPlanScreenState extends State<FullPlanScreen> {
     int dayIndex = 0;
     bool reachedGoal = false;
     while (!reachedGoal) {
-      // Calculate next target time
-      int nextTargetMinutes = currentTargetMinutes - shiftSize;
-      if (nextTargetMinutes < 0) {
-        nextTargetMinutes += 24 * 60;
+      // Calculate next target time based on direction
+      int nextTargetMinutes;
+      if (goingBackwards) {
+        // Going backwards (earlier bedtime)
+        nextTargetMinutes = currentTargetMinutes - shiftSize;
+        if (nextTargetMinutes < 0) {
+          nextTargetMinutes += 24 * 60;
+        }
+      } else {
+        // Going forwards (later bedtime)
+        nextTargetMinutes = currentTargetMinutes + shiftSize;
+        if (nextTargetMinutes >= 24 * 60) {
+          nextTargetMinutes -= 24 * 60;
+        }
       }
-      // Check if next shift would reach or pass the goal
-      int minutesToGoal = (nextTargetMinutes - goalMinutes) % (24 * 60);
-      if (minutesToGoal <= 0 || nextTargetMinutes == goalMinutes) {
-        // Last day: set to goal time
-        nextTargetMinutes = goalMinutes;
-        reachedGoal = true;
+      
+      // Check if we've reached or passed the goal
+      int minutesToGoal;
+      if (goingBackwards) {
+        // Check if we've gone too far backwards
+        minutesToGoal = nextTargetMinutes - goalMinutes;
+        if (minutesToGoal < 0) {
+          minutesToGoal += 24 * 60;
+        }
+        if (minutesToGoal <= shiftSize) {
+          // Last day: set to goal time
+          nextTargetMinutes = goalMinutes;
+          reachedGoal = true;
+        }
+      } else {
+        // Check if we've gone too far forwards
+        minutesToGoal = goalMinutes - nextTargetMinutes;
+        if (minutesToGoal < 0) {
+          minutesToGoal += 24 * 60;
+        }
+        if (minutesToGoal <= shiftSize) {
+          // Last day: set to goal time
+          nextTargetMinutes = goalMinutes;
+          reachedGoal = true;
+        }
       }
       int hours = nextTargetMinutes ~/ 60;
       int minutes = nextTargetMinutes % 60;
@@ -846,7 +1130,7 @@ class _FullPlanScreenState extends State<FullPlanScreen> {
                   ),
                 ),
                 
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
                 
                 // Reassuring Message
                 Container(
@@ -1283,7 +1567,20 @@ class _FullPlanScreenState extends State<FullPlanScreen> {
 
 // Profile Screen
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final VoidCallback? onResetPlan;
+  final TimeOfDay? currentSleepTime;
+  final TimeOfDay? goalSleepTime;
+  final bool? use30MinuteShifts;
+  final Function(TimeOfDay, TimeOfDay, bool)? onPlanUpdated;
+  
+  const ProfileScreen({
+    super.key, 
+    this.onResetPlan,
+    this.currentSleepTime,
+    this.goalSleepTime,
+    this.use30MinuteShifts,
+    this.onPlanUpdated,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1467,28 +1764,65 @@ class ProfileScreen extends StatelessWidget {
                         icon: Icons.notifications,
                         title: 'Notifications',
                         subtitle: 'Manage sleep reminders',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationSettingsScreen(),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 12),
                       _buildSettingRow(
                         icon: Icons.edit,
                         title: 'Edit Plan',
                         subtitle: 'Modify your sleep schedule',
-                        onTap: () {},
+                        onTap: () {
+                          if (currentSleepTime != null && goalSleepTime != null && use30MinuteShifts != null && onPlanUpdated != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditPlanScreen(
+                                  currentSleepTime: currentSleepTime!,
+                                  goalSleepTime: goalSleepTime!,
+                                  use30MinuteShifts: use30MinuteShifts!,
+                                  onPlanUpdated: onPlanUpdated!,
+                                ),
+                              ),
+                            );
+                          } else {
+                            showSnackBarWithClose(context, message: 'No plan to edit. Create a plan first!');
+                          }
+                        },
                       ),
                       const SizedBox(height: 12),
                       _buildSettingRow(
                         icon: Icons.data_usage,
                         title: 'Data & Privacy',
                         subtitle: 'Manage your data',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PrivacyDataScreen(),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 12),
                       _buildSettingRow(
                         icon: Icons.help,
                         title: 'Help & Support',
                         subtitle: 'Get help with the app',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HelpSupportScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -1500,16 +1834,9 @@ class ProfileScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Plan reset! Start fresh with a new sleep schedule.'),
-                          backgroundColor: Colors.blue,
-                        ),
-                      );
-                    },
+                    onPressed: onResetPlan,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Colors.indigo,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
@@ -2145,13 +2472,31 @@ class _PlanSummaryScreenState extends State<PlanSummaryScreen> {
     int currentMinutes = widget.currentSleepTime.hour * 60 + widget.currentSleepTime.minute;
     int goalMinutes = widget.goalSleepTime.hour * 60 + widget.goalSleepTime.minute;
     
-    int difference = currentMinutes - goalMinutes;
-    
-    if (difference < 0) {
-      difference += 24 * 60; // Add 24 hours if goal is earlier
+    // Calculate the shortest path to the goal
+    int difference = goalMinutes - currentMinutes;
+    if (difference.abs() > 12 * 60) {
+      // If the difference is more than 12 hours, take the shorter path
+      if (difference > 0) {
+        difference -= 24 * 60; // Go backwards instead of forwards
+      } else {
+        difference += 24 * 60; // Go forwards instead of backwards
+      }
     }
     
-    int shiftSize = widget.use30MinuteShifts ? 30 : 15;
+    // If difference is negative, we need to go backwards (earlier bedtime)
+    // If difference is positive, we need to go forwards (later bedtime)
+    difference = difference.abs();
+    
+    // Smart shift size calculation
+    int shiftSize;
+    if (difference <= 60) {
+      shiftSize = 15;
+    } else if (difference <= 180) {
+      shiftSize = 20;
+    } else {
+      shiftSize = 30;
+    }
+    
     int shiftsNeeded = (difference / shiftSize).ceil();
     int daysPerShift = difference <= 120 ? 1 : 2;
     int daysNeeded = shiftsNeeded * daysPerShift;
@@ -2164,10 +2509,21 @@ class _PlanSummaryScreenState extends State<PlanSummaryScreen> {
     int currentMinutes = widget.currentSleepTime.hour * 60 + widget.currentSleepTime.minute;
     int goalMinutes = widget.goalSleepTime.hour * 60 + widget.goalSleepTime.minute;
     
-    int difference = currentMinutes - goalMinutes;
-    if (difference < 0) {
-      difference += 24 * 60;
+    // Calculate the shortest path to the goal
+    int difference = goalMinutes - currentMinutes;
+    if (difference.abs() > 12 * 60) {
+      // If the difference is more than 12 hours, take the shorter path
+      if (difference > 0) {
+        difference -= 24 * 60; // Go backwards instead of forwards
+      } else {
+        difference += 24 * 60; // Go forwards instead of backwards
+      }
     }
+    
+    // If difference is negative, we need to go backwards (earlier bedtime)
+    // If difference is positive, we need to go forwards (later bedtime)
+    bool goingBackwards = difference < 0;
+    difference = difference.abs();
     
     // Smart shift size calculation
     int shiftSize;
@@ -2182,10 +2538,18 @@ class _PlanSummaryScreenState extends State<PlanSummaryScreen> {
     // For now, return the first step (Day 1 target)
     // In a real app, you'd track which day the user is on
     int firstStepShift = shiftSize;
-    int newMinutes = currentMinutes - firstStepShift;
+    int newMinutes;
     
-    if (newMinutes < 0) {
-      newMinutes += 24 * 60;
+    if (goingBackwards) {
+      newMinutes = currentMinutes - firstStepShift;
+      if (newMinutes < 0) {
+        newMinutes += 24 * 60;
+      }
+    } else {
+      newMinutes = currentMinutes + firstStepShift;
+      if (newMinutes >= 24 * 60) {
+        newMinutes -= 24 * 60;
+      }
     }
     
     int hours = newMinutes ~/ 60;
@@ -2244,10 +2608,20 @@ class _PlanSummaryScreenState extends State<PlanSummaryScreen> {
     int currentMinutes = widget.currentSleepTime.hour * 60 + widget.currentSleepTime.minute;
     int goalMinutes = widget.goalSleepTime.hour * 60 + widget.goalSleepTime.minute;
     
-    int difference = currentMinutes - goalMinutes;
-    if (difference < 0) {
-      difference += 24 * 60;
+    // Calculate the shortest path to the goal
+    int difference = goalMinutes - currentMinutes;
+    if (difference.abs() > 12 * 60) {
+      // If the difference is more than 12 hours, take the shorter path
+      if (difference > 0) {
+        difference -= 24 * 60; // Go backwards instead of forwards
+      } else {
+        difference += 24 * 60; // Go forwards instead of backwards
+      }
     }
+    
+    // If difference is negative, we need to go backwards (earlier bedtime)
+    // If difference is positive, we need to go forwards (later bedtime)
+    difference = difference.abs();
     
     // Smart shift size calculation
     int shiftSize;
@@ -2319,12 +2693,16 @@ class DashboardScreen extends StatefulWidget {
   final TimeOfDay currentSleepTime;
   final TimeOfDay goalSleepTime;
   final bool use30MinuteShifts;
+  final VoidCallback onResetPlan;
+  final int? planLength;
 
   const DashboardScreen({
     super.key,
     required this.currentSleepTime,
     required this.goalSleepTime,
     required this.use30MinuteShifts,
+    required this.onResetPlan,
+    this.planLength,
   });
 
   @override
@@ -2974,7 +3352,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 12),
                       _buildPlanRow('Shift Speed', _getShiftSize(), Colors.purple),
                       const SizedBox(height: 12),
-                      _buildPlanRow('Total Plan Days', '${_getTotalPlanDays()} days', Colors.orange),
+                      _buildPlanRow('Total Plan Days', '${widget.planLength ?? _getTotalPlanDays()} days', Colors.orange),
                     ],
                   ),
                 ),
@@ -3096,7 +3474,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Day ${_getCurrentPlanDay()} of ${_getTotalPlanDays()}',
+                                  'Day ${_getCurrentPlanDay()} of ${widget.planLength ?? _getTotalPlanDays()}',
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -3105,7 +3483,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                                 const SizedBox(height: 8),
                                 LinearProgressIndicator(
-                                  value: _getTotalPlanDays() > 0 ? _getDaysCompleted() / _getTotalPlanDays() : 0,
+                                  value: widget.planLength != null ? _getDaysCompleted() / widget.planLength! : 0,
                                   backgroundColor: Colors.grey.withOpacity(0.3),
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
                                   minHeight: 8,
@@ -3336,12 +3714,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 TextButton(
                                   onPressed: () {
                                     Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Plan reset! Start fresh with a new sleep schedule.'),
-                                        backgroundColor: Colors.blue,
-                                      ),
-                                    );
+                                    widget.onResetPlan();
                                   },
                                   child: const Text(
                                     'Reset',
@@ -3406,14 +3779,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 20),
                       // Progress bar
                       LinearProgressIndicator(
-                        value: _getTotalPlanDays() > 0 ? _getDaysCompleted() / _getTotalPlanDays() : 0,
+                        value: widget.planLength != null ? _getDaysCompleted() / widget.planLength! : 0,
                         backgroundColor: Colors.grey[800],
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
                         minHeight: 8,
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        "Day ${_getDaysCompleted() + 1} of ${_getTotalPlanDays()}",
+                        "Day ${_getDaysCompleted() + 1} of ${widget.planLength ?? _getTotalPlanDays()}",
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -3502,10 +3875,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     int currentMinutes = widget.currentSleepTime.hour * 60 + widget.currentSleepTime.minute;
     int goalMinutes = widget.goalSleepTime.hour * 60 + widget.goalSleepTime.minute;
     
-    int difference = currentMinutes - goalMinutes;
-    if (difference < 0) {
-      difference += 24 * 60;
+    // Calculate the shortest path to the goal
+    int difference = goalMinutes - currentMinutes;
+    if (difference.abs() > 12 * 60) {
+      // If the difference is more than 12 hours, take the shorter path
+      if (difference > 0) {
+        difference -= 24 * 60; // Go backwards instead of forwards
+      } else {
+        difference += 24 * 60; // Go forwards instead of backwards
+      }
     }
+    
+    // If difference is negative, we need to go backwards (earlier bedtime)
+    // If difference is positive, we need to go forwards (later bedtime)
+    difference = difference.abs();
     
     // Smart shift size calculation
     int shiftSize;
@@ -3527,10 +3910,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _getShiftSize() {
     int currentMinutes = widget.currentSleepTime.hour * 60 + widget.currentSleepTime.minute;
     int goalMinutes = widget.goalSleepTime.hour * 60 + widget.goalSleepTime.minute;
-    int difference = currentMinutes - goalMinutes;
-    if (difference < 0) {
-      difference += 24 * 60;
+    
+    // Calculate the shortest path to the goal
+    int difference = goalMinutes - currentMinutes;
+    if (difference.abs() > 12 * 60) {
+      // If the difference is more than 12 hours, take the shorter path
+      if (difference > 0) {
+        difference -= 24 * 60; // Go backwards instead of forwards
+      } else {
+        difference += 24 * 60; // Go forwards instead of backwards
+      }
     }
+    
+    // If difference is negative, we need to go backwards (earlier bedtime)
+    // If difference is positive, we need to go forwards (later bedtime)
+    difference = difference.abs();
+    
     if (difference <= 60) {
       return '15 min per shift';
     } else if (difference <= 180) {
@@ -3836,17 +4231,9 @@ class _ProgressTrackingDialogState extends State<ProgressTrackingDialog> {
       Navigator.of(context).pop();
       
       // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            selectedStatus == ProgressStatus.onTarget 
-                ? '🎉 Amazing! Keep up the great work!'
-                : '📝 Progress saved! Every day is a new opportunity.',
-          ),
-          backgroundColor: Colors.indigo,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showSnackBarWithClose(context, message: selectedStatus == ProgressStatus.onTarget 
+          ? '🎉 Amazing! Keep up the great work!'
+          : '📝 Progress saved! Every day is a new opportunity.');
     }
   }
 }
@@ -3932,12 +4319,7 @@ class _SleepShiftScreenState extends State<SleepShiftScreen> {
                                 builder: (_) => AlreadySleepWellScreen(
                                   onCompleted: (sleepTime, wakeTime, hasConstraint) {
                                     widget.onPlanCreated?.call(sleepTime, wakeTime, hasConstraint);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Welcome! Explore our sleep tools and tips! ✨'),
-                                        backgroundColor: Colors.green,
-                                      ),
-                                    );
+                                    showSnackBarWithClose(context, message: 'Welcome! Explore our sleep tools and tips! ✨');
                                   },
                                 ),
                               ),
@@ -4429,12 +4811,7 @@ class _SleepShiftScreenState extends State<SleepShiftScreen> {
                           final targetBedtime = _getTodayTarget();
                           await ProgressTrackingService.scheduleBedtimeReminder(targetBedtime);
                           
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Sleep plan created! 🚀'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
+                          showSnackBarWithClose(context, message: 'Sleep plan created! 🚀');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.indigo,
@@ -4772,33 +5149,34 @@ class _SleepShiftScreenState extends State<SleepShiftScreen> {
   String _getDaysNeeded() {
     int currentSleepMinutes = currentSleepTime.hour * 60 + currentSleepTime.minute;
     int goalSleepMinutes = goalSleepTime.hour * 60 + goalSleepTime.minute;
-    int currentWakeMinutes = currentWakeTime.hour * 60 + currentWakeTime.minute;
-    int goalWakeMinutes = goalWakeTime.hour * 60 + goalWakeTime.minute;
     
-    int sleepDifference = currentSleepMinutes - goalSleepMinutes;
-    int wakeDifference = currentWakeMinutes - goalWakeMinutes;
-    
-    if (sleepDifference < 0) {
-      sleepDifference += 24 * 60;
+    // Calculate the shortest path to the goal
+    int difference = goalSleepMinutes - currentSleepMinutes;
+    if (difference.abs() > 12 * 60) {
+      // If the difference is more than 12 hours, take the shorter path
+      if (difference > 0) {
+        difference -= 24 * 60; // Go backwards instead of forwards
+      } else {
+        difference += 24 * 60; // Go forwards instead of backwards
+      }
     }
-    if (wakeDifference < 0) {
-      wakeDifference += 24 * 60;
-    }
     
-    int totalDifference = sleepDifference + wakeDifference;
+    // If difference is negative, we need to go backwards (earlier bedtime)
+    // If difference is positive, we need to go forwards (later bedtime)
+    difference = difference.abs();
     
     // Smart shift size calculation
     int shiftSize;
-    if (totalDifference <= 60) {
+    if (difference <= 60) {
       shiftSize = 15;
-    } else if (totalDifference <= 180) {
+    } else if (difference <= 180) {
       shiftSize = 20;
     } else {
       shiftSize = 30;
     }
     
-    int shiftsNeeded = (totalDifference / shiftSize).ceil();
-    int daysPerShift = totalDifference <= 120 ? 1 : 2;
+    int shiftsNeeded = (difference / shiftSize).ceil();
+    int daysPerShift = difference <= 120 ? 1 : 2;
     int daysNeeded = shiftsNeeded * daysPerShift;
     
     return daysNeeded.toString();
@@ -5282,14 +5660,48 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
+            // Header Section
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width > 400 ? 24.0 : 16.0,
+                vertical: 16.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  
+                  // Header
+                  Text(
+                    'Sleep Fixer AI',
+                    style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width > 400 ? 32 : 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Your personalized sleep science buddy',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                                  ),
+                
+                const SizedBox(height: 20),
+                ],
+              ),
+            ),
             
             // Messages
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 150, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 itemCount: _messages.length + (_isLoading ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == _messages.length && _isLoading) {
@@ -5636,15 +6048,15 @@ class _AlreadySleepWellScreenState extends State<AlreadySleepWellScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.indigo[900],
-      appBar: AppBar(
-        backgroundColor: Colors.indigo[900],
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('Your Sleep Schedule', style: TextStyle(color: Colors.white)),
-        centerTitle: true,
-      ),
-      body: SafeArea(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/sleep_fixer_background.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
@@ -5656,88 +6068,150 @@ class _AlreadySleepWellScreenState extends State<AlreadySleepWellScreen> {
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.indigo.withOpacity(0.2),
+                    color: Colors.blue.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.indigo.withOpacity(0.4), width: 1),
+                    border: Border.all(color: Colors.blue.withOpacity(0.4), width: 1),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.lightbulb_outline, color: Colors.indigo, size: 20),
+                      Icon(
+                        Icons.lightbulb_outline,
+                        color: Colors.blue,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Tip: Use the "Fixed?" toggles if your times are set by work, school, or other obligations',
-                          style: TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500),
+                          '💡 Tip: Use the "Fixed?" toggles if your times are set by work, school, or other obligations',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                       IconButton(
-                        onPressed: () => setState(() => showHelper = false),
-                        icon: const Icon(Icons.close, color: Colors.indigo, size: 18),
+                        onPressed: () {
+                          setState(() {
+                            showHelper = false;
+                          });
+                        },
+                        icon: Icon(
+                          Icons.close,
+                          color: Colors.blue,
+                          size: 18,
+                        ),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
                 ),
-              Card(
-                color: Colors.indigo[800],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.bedtime, color: Colors.white, size: 24),
-                          const SizedBox(width: 12),
-                          const Text('Sleep & Wake Times', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildTimeTile('Sleep Time', sleepTime, () => _pickTime(true)),
+              
+              // Sleep & Wake Times Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.blue.withOpacity(0.3), width: 2),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.schedule, color: Colors.blue, size: 24),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Your Sleep Schedule',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildTimeTile('Wake Time', wakeTime, () => _pickTime(false)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTimeSection(
+                            title: 'Sleep Time',
+                            subtitle: 'When do you go to bed?',
+                            time: sleepTime,
+                            onTap: () => _pickTime(true),
+                            color: Colors.blue,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildConstraintToggle('Fixed?', sleepConstraint, (v) => setState(() => sleepConstraint = v), 'Toggle if your sleep time is fixed'),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildTimeSection(
+                            title: 'Wake Time',
+                            subtitle: 'When do you wake up?',
+                            time: wakeTime,
+                            onTap: () => _pickTime(false),
+                            color: Colors.orange,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildConstraintToggle('Fixed?', wakeConstraint, (v) => setState(() => wakeConstraint = v), 'Toggle if your wake time is fixed'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildConstraintToggle(
+                            title: 'Fixed?',
+                            value: sleepConstraint,
+                            onChanged: (value) {
+                              setState(() {
+                                sleepConstraint = value;
+                              });
+                            },
+                            color: Colors.blue,
+                            tooltip: 'Toggle if your sleep time is fixed by work, school, or other obligations',
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildConstraintToggle(
+                            title: 'Fixed?',
+                            value: wakeConstraint,
+                            onChanged: (value) {
+                              setState(() {
+                                wakeConstraint = value;
+                              });
+                            },
+                            color: Colors.orange,
+                            tooltip: 'Toggle if your wake time is fixed by work, school, or other obligations',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const Spacer(),
-              Center(
-                child: ElevatedButton.icon(
+              
+              const SizedBox(height: 30),
+              
+              // Done Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
                   onPressed: () {
                     widget.onCompleted?.call(sleepTime, wakeTime, sleepConstraint || wakeConstraint);
                     Navigator.of(context).pop();
                   },
-                  icon: const Icon(Icons.check),
-                  label: const Text('Done'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.indigo,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'Done ✨',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -5745,49 +6219,1750 @@ class _AlreadySleepWellScreenState extends State<AlreadySleepWellScreen> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
 
-  Widget _buildTimeTile(String label, TimeOfDay time, VoidCallback onTap) {
+  Widget _buildTimeSection({
+    required String title,
+    required String subtitle,
+    required TimeOfDay time,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        width: double.infinity,
+        padding: EdgeInsets.all(MediaQuery.of(context).size.width > 400 ? 16.0 : 12.0),
         decoration: BoxDecoration(
-          color: Colors.indigo[700],
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.indigo.withOpacity(0.25), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.indigoAccent.withOpacity(0.18),
+              blurRadius: 18,
+              spreadRadius: 2,
+            ),
+          ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Text(time.format(context), style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: MediaQuery.of(context).size.width > 400 ? 16 : 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
             const SizedBox(height: 4),
-            const Text('Tap to change', style: TextStyle(fontSize: 12, color: Colors.white54)),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: MediaQuery.of(context).size.width > 400 ? 12 : 11,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  Icons.access_time,
+                  color: color,
+                  size: MediaQuery.of(context).size.width > 400 ? 20 : 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  time.format(context),
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.width > 400 ? 20 : 18,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildConstraintToggle(String label, bool value, ValueChanged<bool> onChanged, String tooltip) {
+  Widget _buildConstraintToggle({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color color,
+    String? tooltip,
+  }) {
     return Tooltip(
-      message: tooltip,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: Colors.white,
-            inactiveThumbColor: Colors.indigo[300],
-            inactiveTrackColor: Colors.indigo[100],
+      message: tooltip ?? 'Toggle if this time is fixed by work, school, or other obligations',
+      preferBelow: false,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      textStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 12,
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.2), width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+            Transform.scale(
+              scale: 0.7,
+              child: Switch(
+                value: value,
+                onChanged: onChanged,
+                activeColor: color,
+                activeTrackColor: color.withOpacity(0.3),
+                inactiveThumbColor: Colors.grey,
+                inactiveTrackColor: Colors.grey.withOpacity(0.3),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Notification Settings Screen
+class NotificationSettingsScreen extends StatefulWidget {
+  const NotificationSettingsScreen({super.key});
+
+  @override
+  State<NotificationSettingsScreen> createState() => _NotificationSettingsScreenState();
+}
+
+class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
+  bool bedtimeReminders = true;
+  bool morningCheckIns = true;
+  bool weeklyReports = true;
+  bool dinnerReminders = false;
+  bool customReminders = false;
+  bool morningSunlightReminders = true;
+  bool windDownReminders = true;
+  bool screenOffReminders = true;
+  bool dimLightsReminders = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        height: MediaQuery.of(context).size.height,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/sleep_fixer_background.png'),
+            fit: BoxFit.cover,
           ),
-          const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500)),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Notification Settings',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              
+              const SizedBox(height: 30),
+              
+              // Notification Settings Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.indigo.withOpacity(0.25), width: 1.5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.notifications,
+                          color: Colors.indigo,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Sleep Notifications',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Bedtime Reminders
+                    _buildNotificationRow(
+                      'Bedtime Reminders',
+                      'Get notified 30 minutes before your target bedtime',
+                      Icons.bedtime,
+                      bedtimeReminders,
+                      (value) {
+                        setState(() {
+                          bedtimeReminders = value;
+                        });
+                        if (value) {
+                          // Schedule bedtime reminders
+                          ProgressTrackingService.scheduleBedtimeReminder(
+                            const TimeOfDay(hour: 22, minute: 0) // Default, should use actual target
+                          );
+                        } else {
+                          // Cancel bedtime reminders
+                          NotificationService.cancelAllNotifications();
+                        }
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Wind Down Reminders
+                    _buildNotificationRow(
+                      'Wind Down Routine',
+                      'Start winding down 1 hour before bed (get off screens, dim lights)',
+                      Icons.self_improvement,
+                      windDownReminders,
+                      (value) {
+                        setState(() {
+                          windDownReminders = value;
+                        });
+                        if (value) {
+                          NotificationService.scheduleWindDownReminder(const TimeOfDay(hour: 22, minute: 0));
+                        } else {
+                          NotificationService.cancelAllNotifications();
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // Screen Off Reminders
+                    _buildNotificationRow(
+                      'Screen Off',
+                      'Put away devices 30 minutes before bed',
+                      Icons.tv_off,
+                      screenOffReminders,
+                      (value) {
+                        setState(() {
+                          screenOffReminders = value;
+                        });
+                        if (value) {
+                          NotificationService.scheduleScreenOffReminder(const TimeOfDay(hour: 22, minute: 0));
+                        } else {
+                          NotificationService.cancelAllNotifications();
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // Dim Lights Reminders
+                    _buildNotificationRow(
+                      'Dim Lights',
+                      'Dim the lights 45 minutes before bed',
+                      Icons.light_mode,
+                      dimLightsReminders,
+                      (value) {
+                        setState(() {
+                          dimLightsReminders = value;
+                        });
+                        if (value) {
+                          NotificationService.scheduleDimLightsReminder(const TimeOfDay(hour: 22, minute: 0));
+                        } else {
+                          NotificationService.cancelAllNotifications();
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // Morning Check-ins
+                    _buildNotificationRow(
+                      'Morning Check-ins',
+                      'Track your sleep progress daily',
+                      Icons.wb_sunny,
+                      morningCheckIns,
+                      (value) {
+                        setState(() {
+                          morningCheckIns = value;
+                        });
+                        if (value) {
+                          ProgressTrackingService.scheduleMorningCheckIn(
+                            const TimeOfDay(hour: 7, minute: 30)
+                          );
+                        } else {
+                          NotificationService.cancelAllNotifications();
+                        }
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Weekly Reports
+                    _buildNotificationRow(
+                      'Weekly Reports',
+                      'Get your sleep progress summary every Sunday',
+                      Icons.analytics,
+                      weeklyReports,
+                      (value) {
+                        setState(() {
+                          weeklyReports = value;
+                        });
+                        if (value) {
+                          ProgressTrackingService.scheduleWeeklyReport();
+                        } else {
+                          NotificationService.cancelAllNotifications();
+                        }
+                      },
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Lifestyle Notifications
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.favorite,
+                          color: Colors.green,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Lifestyle Reminders',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Dinner Reminders
+                    _buildNotificationRow(
+                      'Dinner Reminders',
+                      'Remind you to finish dinner 2.5 hours before bedtime',
+                      Icons.restaurant,
+                      dinnerReminders,
+                      (value) {
+                        setState(() {
+                          dinnerReminders = value;
+                        });
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Custom Reminders
+                    _buildNotificationRow(
+                      'Custom Reminders',
+                      'Set your own sleep-related reminders',
+                      Icons.schedule,
+                      customReminders,
+                      (value) {
+                        setState(() {
+                          customReminders = value;
+                        });
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Morning Sunlight Reminders
+                    _buildNotificationRow(
+                      'Morning Sunlight',
+                      'Remind you to get morning sunlight for better sleep',
+                      Icons.wb_sunny_outlined,
+                      morningSunlightReminders,
+                      (value) {
+                        setState(() {
+                          morningSunlightReminders = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // Notification Tips
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.indigo.withOpacity(0.3), width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb,
+                          color: Colors.indigo,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Notification Tips',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '• Bedtime reminders help you stick to your sleep schedule\n'
+                      '• Morning check-ins track your progress\n'
+                      '• Weekly reports show your sleep trends\n'
+                      '• Lifestyle reminders support healthy sleep habits',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        ), // <-- Add this to close the Container
+      ),
+    );
+  }
+
+  Widget _buildNotificationRow(
+    String title,
+    String subtitle,
+    IconData icon,
+    bool value,
+    Function(bool) onChanged,
+  ) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.indigo.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.indigo,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: Colors.indigo,
+          activeTrackColor: Colors.indigo.withOpacity(0.3),
+          inactiveThumbColor: Colors.grey,
+          inactiveTrackColor: Colors.grey.withOpacity(0.3),
+        ),
+      ],
+    );
+  }
+}
+
+// Edit Plan Screen
+class EditPlanScreen extends StatefulWidget {
+  final TimeOfDay currentSleepTime;
+  final TimeOfDay goalSleepTime;
+  final bool use30MinuteShifts;
+  final Function(TimeOfDay, TimeOfDay, bool) onPlanUpdated;
+
+  const EditPlanScreen({
+    super.key,
+    required this.currentSleepTime,
+    required this.goalSleepTime,
+    required this.use30MinuteShifts,
+    required this.onPlanUpdated,
+  });
+
+  @override
+  State<EditPlanScreen> createState() => _EditPlanScreenState();
+}
+
+class _EditPlanScreenState extends State<EditPlanScreen> {
+  late TimeOfDay currentSleepTime;
+  late TimeOfDay goalSleepTime;
+  late TimeOfDay currentWakeTime;
+  late TimeOfDay goalWakeTime;
+  
+  // Constraint toggles
+  bool currentSleepConstraint = false;
+  bool currentWakeConstraint = false;
+  bool goalSleepConstraint = false;
+  bool goalWakeConstraint = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with current plan values
+    currentSleepTime = widget.currentSleepTime;
+    goalSleepTime = widget.goalSleepTime;
+    
+    // Calculate wake times (assuming 8 hours of sleep)
+    currentWakeTime = _addHours(currentSleepTime, 8);
+    goalWakeTime = _addHours(goalSleepTime, 8);
+  }
+
+  TimeOfDay _addHours(TimeOfDay time, int hours) {
+    int newHour = (time.hour + hours) % 24;
+    return TimeOfDay(hour: newHour, minute: time.minute);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        height: MediaQuery.of(context).size.height,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/sleep_fixer_background.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width > 400 ? 24.0 : 16.0,
+              vertical: 16.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                
+                // Header
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Edit Sleep Plan',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Modify your sleep schedule',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                
+                const SizedBox(height: 30),
+                
+                // Current Schedule Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.blue.withOpacity(0.3), width: 2),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.schedule, color: Colors.blue, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Current Schedule',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTimeSection(
+                              title: 'Sleep Time',
+                              subtitle: 'When do you usually go to bed?',
+                              time: currentSleepTime,
+                              onTap: () => _selectTime(context, true, true),
+                              color: Colors.blue,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTimeSection(
+                              title: 'Wake Time',
+                              subtitle: 'When do you usually wake up?',
+                              time: currentWakeTime,
+                              onTap: () => _selectTime(context, true, false),
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildConstraintToggle(
+                              title: 'Fixed?',
+                              value: currentSleepConstraint,
+                              onChanged: (value) {
+                                setState(() {
+                                  currentSleepConstraint = value;
+                                });
+                              },
+                              color: Colors.blue,
+                              tooltip: 'Toggle if your current sleep time is fixed by work, school, or other obligations',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildConstraintToggle(
+                              title: 'Fixed?',
+                              value: currentWakeConstraint,
+                              onChanged: (value) {
+                                setState(() {
+                                  currentWakeConstraint = value;
+                                });
+                              },
+                              color: Colors.blue,
+                              tooltip: 'Toggle if your current wake time is fixed by work, school, or other obligations',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Goal Schedule Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.green.withOpacity(0.3), width: 2),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.trending_up, color: Colors.green, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Goal Schedule',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTimeSection(
+                              title: 'Sleep Time',
+                              subtitle: 'When do you want to go to bed?',
+                              time: goalSleepTime,
+                              onTap: () => _selectTime(context, false, true),
+                              color: Colors.green,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTimeSection(
+                              title: 'Wake Time',
+                              subtitle: 'When do you want to wake up?',
+                              time: goalWakeTime,
+                              onTap: () => _selectTime(context, false, false),
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildConstraintToggle(
+                              title: 'Fixed?',
+                              value: goalSleepConstraint,
+                              onChanged: (value) {
+                                setState(() {
+                                  goalSleepConstraint = value;
+                                });
+                              },
+                              color: Colors.green,
+                              tooltip: 'Toggle if your goal sleep time is fixed by work, school, or other obligations',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildConstraintToggle(
+                              title: 'Fixed?',
+                              value: goalWakeConstraint,
+                              onChanged: (value) {
+                                setState(() {
+                                  goalWakeConstraint = value;
+                                });
+                              },
+                              color: Colors.green,
+                              tooltip: 'Toggle if your goal wake time is fixed by work, school, or other obligations',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 30),
+                
+                // Update Plan Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      widget.onPlanUpdated(currentSleepTime, goalSleepTime, _getUse30MinuteShifts());
+                      
+                      // Schedule notifications for the updated plan
+                      final targetBedtime = _getTodayTarget();
+                      await ProgressTrackingService.scheduleBedtimeReminder(targetBedtime);
+                      
+                      showSnackBarWithClose(context, message: 'Sleep plan updated! ✨');
+                      
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text(
+                      'Update Plan ✨',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeSection({
+    required String title,
+    required String subtitle,
+    required TimeOfDay time,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(MediaQuery.of(context).size.width > 400 ? 16.0 : 12.0),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.indigo.withOpacity(0.25), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.indigoAccent.withOpacity(0.18),
+              blurRadius: 18,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: MediaQuery.of(context).size.width > 400 ? 16 : 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: MediaQuery.of(context).size.width > 400 ? 12 : 11,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  Icons.access_time,
+                  color: color,
+                  size: MediaQuery.of(context).size.width > 400 ? 20 : 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  time.format(context),
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.width > 400 ? 20 : 18,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConstraintToggle({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color color,
+    String? tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip ?? 'Toggle if this time is fixed by work, school, or other obligations',
+      preferBelow: false,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      textStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 12,
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.2), width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+            Transform.scale(
+              scale: 0.7,
+              child: Switch(
+                value: value,
+                onChanged: onChanged,
+                activeColor: color,
+                activeTrackColor: color.withOpacity(0.3),
+                inactiveThumbColor: Colors.grey,
+                inactiveTrackColor: Colors.grey.withOpacity(0.3),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectTime(BuildContext context, bool isCurrent, bool isSleep) async {
+    TimeOfDay initialTime = isCurrent 
+        ? (isSleep ? currentSleepTime : currentWakeTime)
+        : (isSleep ? goalSleepTime : goalWakeTime);
+    
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            timePickerTheme: const TimePickerThemeData(
+              backgroundColor: Color(0xFF16213E),
+              hourMinuteTextColor: Colors.white,
+              hourMinuteColor: Colors.indigo,
+              dialHandColor: Colors.indigo,
+              dialBackgroundColor: Color(0xFF1A1A2E),
+              dialTextColor: Colors.white,
+              entryModeIconColor: Colors.white,
+              hourMinuteTextStyle: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              dayPeriodTextStyle: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+              dialTextStyle: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null) {
+      setState(() {
+        if (isCurrent) {
+          if (isSleep) {
+            currentSleepTime = picked;
+            currentWakeTime = _addHours(picked, 8);
+          } else {
+            currentWakeTime = picked;
+            currentSleepTime = _subtractHours(picked, 8);
+          }
+        } else {
+          if (isSleep) {
+            goalSleepTime = picked;
+            goalWakeTime = _addHours(picked, 8);
+          } else {
+            goalWakeTime = picked;
+            goalSleepTime = _subtractHours(picked, 8);
+          }
+        }
+      });
+    }
+  }
+
+  TimeOfDay _subtractHours(TimeOfDay time, int hours) {
+    int newHour = (time.hour - hours + 24) % 24;
+    return TimeOfDay(hour: newHour, minute: time.minute);
+  }
+
+  bool _getUse30MinuteShifts() {
+    // Calculate time difference
+    int currentMinutes = currentSleepTime.hour * 60 + currentSleepTime.minute;
+    int goalMinutes = goalSleepTime.hour * 60 + goalSleepTime.minute;
+    int difference = goalMinutes - currentMinutes;
+    
+    // Handle overnight shifts
+    if (difference.abs() > 12 * 60) {
+      if (difference > 0) {
+        difference -= 24 * 60;
+      } else {
+        difference += 24 * 60;
+      }
+    }
+    
+    // Use 30-minute shifts for larger differences
+    return difference.abs() > 180;
+  }
+
+  TimeOfDay _getTodayTarget() {
+    // This would calculate today's target based on the plan
+    // For now, return the goal time
+    return goalSleepTime;
+  }
+}
+
+// Helper to show SnackBar with X button
+void showSnackBarWithClose(BuildContext context, {
+  required String message,
+  Color backgroundColor = Colors.blue,
+  Duration duration = const Duration(seconds: 2),
+}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          Expanded(child: Text(message)),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 20),
+            onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+            tooltip: 'Dismiss',
+          ),
         ],
       ),
+      backgroundColor: backgroundColor,
+      duration: duration,
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
+
+// Privacy & Data Screen
+class PrivacyDataScreen extends StatelessWidget {
+  const PrivacyDataScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        height: MediaQuery.of(context).size.height,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/sleep_fixer_background.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Privacy & Data',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                
+                // Data Collection Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.indigo.withOpacity(0.25), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.security, color: Colors.indigo, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Data Collection',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildPrivacyRow(
+                        'Sleep Schedule Data',
+                        'Your sleep times, wake times, and plan progress are stored locally on your device.',
+                        Icons.bedtime,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPrivacyRow(
+                        'Progress Tracking',
+                        'Sleep quality ratings and streak data are stored to help track your improvement.',
+                        Icons.trending_up,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPrivacyRow(
+                        'App Usage',
+                        'Basic usage statistics to improve app performance and features.',
+                        Icons.analytics,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Data Storage Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.green.withOpacity(0.25), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.storage, color: Colors.green, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Data Storage',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildPrivacyRow(
+                        'Local Storage',
+                        'All your data is stored locally on your device using secure encryption.',
+                        Icons.device_hub,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPrivacyRow(
+                        'No Cloud Sync',
+                        'We do not sync your data to external servers or cloud services.',
+                        Icons.cloud_off,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPrivacyRow(
+                        'Data Retention',
+                        'Your data remains on your device until you delete the app or reset your plan.',
+                        Icons.schedule,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // User Rights Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.purple.withOpacity(0.25), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.person, color: Colors.purple, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Your Rights',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildPrivacyRow(
+                        'Access Your Data',
+                        'You can view all your stored data within the app at any time.',
+                        Icons.visibility,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPrivacyRow(
+                        'Delete Your Data',
+                        'Reset your plan or delete the app to remove all your data.',
+                        Icons.delete,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPrivacyRow(
+                        'No Third-Party Sharing',
+                        'We do not sell, rent, or share your data with third parties.',
+                        Icons.block,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Contact Info Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.orange.withOpacity(0.25), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.contact_support, color: Colors.orange, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Contact Us',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildPrivacyRow(
+                        'Privacy Questions',
+                        'Email us at privacy@sleepfixer.ai for privacy-related inquiries.',
+                        Icons.email,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPrivacyRow(
+                        'Data Requests',
+                        'Contact us if you need help accessing or deleting your data.',
+                        Icons.help,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrivacyRow(String title, String description, IconData icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: Colors.indigo.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.indigo,
+            size: 18,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Help & Support Screen
+class HelpSupportScreen extends StatelessWidget {
+  const HelpSupportScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        height: MediaQuery.of(context).size.height,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/sleep_fixer_background.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Help & Support',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                
+                // FAQ Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.indigo.withOpacity(0.25), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.question_answer, color: Colors.indigo, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Frequently Asked Questions',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildFAQItem(
+                        'How does the sleep plan work?',
+                        'The app creates a gradual sleep schedule adjustment plan. Each night, your bedtime shifts by 15-30 minutes until you reach your goal sleep time.',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildFAQItem(
+                        'What if I miss a day?',
+                        'No worries! Life happens. You can continue from where you left off, or adjust your plan if needed. Progress, not perfection!',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildFAQItem(
+                        'How do notifications work?',
+                        'The app sends gentle reminders before bedtime, morning check-ins, and weekly progress reports. You can customize these in Settings.',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildFAQItem(
+                        'Can I edit my sleep plan?',
+                        'Yes! Go to Profile > Edit Plan to modify your current and goal sleep times anytime.',
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Troubleshooting Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.green.withOpacity(0.25), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.build, color: Colors.green, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Troubleshooting',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTroubleshootItem(
+                        'Notifications not working?',
+                        'Check your device notification settings and ensure Sleep Fixer AI has permission to send notifications.',
+                        Icons.notifications_off,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTroubleshootItem(
+                        'App crashes or freezes?',
+                        'Try restarting the app. If the problem persists, try clearing the app cache or reinstalling.',
+                        Icons.bug_report,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTroubleshootItem(
+                        'Plan not updating?',
+                        'Make sure you\'re connected to the internet when creating or editing plans.',
+                        Icons.sync_problem,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Contact Support Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.orange.withOpacity(0.25), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.support_agent, color: Colors.orange, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Contact Support',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildContactItem(
+                        'Email Support',
+                        'support@sleepfixer.ai',
+                        Icons.email,
+                        () {
+                          // Handle email support
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildContactItem(
+                        'In-App Feedback',
+                        'Report bugs or suggest features',
+                        Icons.feedback,
+                        () {
+                          // Handle in-app feedback
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // App Info Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.purple.withOpacity(0.25), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info, color: Colors.purple, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'App Information',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInfoRow('Version', '1.0.0'),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Last Updated', 'July 2025'),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Developer', 'Sleep Fixer Team'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFAQItem(String question, String answer) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          question,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          answer,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTroubleshootItem(String issue, String solution, IconData icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: Colors.green.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.green,
+            size: 18,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                issue,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                solution,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContactItem(String title, String subtitle, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.orange,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.arrow_forward_ios,
+            color: Colors.grey,
+            size: 16,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ],
     );
   }
 }
