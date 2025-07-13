@@ -33,8 +33,14 @@ class NotificationService {
       iOS: iosSettings,
     );
 
-    await _notifications.initialize(settings);
-    _initialized = true;
+    try {
+      await _notifications.initialize(settings);
+      _initialized = true;
+    } catch (e) {
+      // Handle web platform gracefully
+      print('Notifications not available on this platform: $e');
+      _initialized = true;
+    }
   }
 
   static Future<bool> requestPermissions() async {
@@ -46,38 +52,43 @@ class NotificationService {
   static Future<void> scheduleBedtimeReminder(TimeOfDay targetBedtime) async {
     if (!_initialized) await initialize();
     
-    // Calculate reminder time (30 minutes before bedtime)
-    final now = DateTime.now();
-    final bedtimeDateTime = DateTime(now.year, now.month, now.day, targetBedtime.hour, targetBedtime.minute);
-    final reminderTime = bedtimeDateTime.subtract(const Duration(minutes: 30));
-    
-    // If the reminder time has passed today, schedule for tomorrow
-    final scheduledTime = reminderTime.isBefore(now) 
-        ? reminderTime.add(const Duration(days: 1))
-        : reminderTime;
+    try {
+      // Calculate reminder time (30 minutes before bedtime)
+      final now = DateTime.now();
+      final bedtimeDateTime = DateTime(now.year, now.month, now.day, targetBedtime.hour, targetBedtime.minute);
+      final reminderTime = bedtimeDateTime.subtract(const Duration(minutes: 30));
+      
+      // If the reminder time has passed today, schedule for tomorrow
+      final scheduledTime = reminderTime.isBefore(now) 
+          ? reminderTime.add(const Duration(days: 1))
+          : reminderTime;
 
-    await _notifications.zonedSchedule(
-      3, // Bedtime reminder ID
-      'Sleep Fixer AI',
-      'Time to start winding down! 🌙 Your target bedtime is in 30 minutes.',
-      tz.TZDateTime.from(scheduledTime, tz.local),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'sleep_bedtime_reminder',
-          'Bedtime Reminder',
-          channelDescription: 'Daily bedtime reminder',
-          importance: Importance.high,
-          priority: Priority.high,
+      await _notifications.zonedSchedule(
+        3, // Bedtime reminder ID
+        'Sleep Fixer AI',
+        'Time to start winding down! 🌙 Your target bedtime is in 30 minutes.',
+        tz.TZDateTime.from(scheduledTime, tz.local),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'sleep_bedtime_reminder',
+            'Bedtime Reminder',
+            channelDescription: 'Daily bedtime reminder',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    } catch (e) {
+      // Handle web platform gracefully
+      print('Bedtime reminder not available on this platform: $e');
+    }
   }
 
   static Future<void> scheduleMorningCheckIn(TimeOfDay wakeUpTime) async {
